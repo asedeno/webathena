@@ -74,28 +74,32 @@ class WebKDC:
             Rule('/v1/urandom', endpoint=('urandom', None)),
         ])
 
-
-    def validate_AS_REQ(self, req_asn1):
+    @staticmethod
+    def validate_AS_REQ(req_asn1):
         msg_type = int(req_asn1.getComponentByName('msg-type'))
         if msg_type != krb_asn1.KDC_REQ.msg_type_as:
             raise ValueError('Bad msg-type')
 
-    def validate_TGS_REQ(self, req_asn1):
+    @staticmethod
+    def validate_TGS_REQ(req_asn1):
         msg_type = int(req_asn1.getComponentByName('msg-type'))
         if msg_type != krb_asn1.KDC_REQ.msg_type_tgs:
             raise ValueError('Bad msg-type')
 
-    def validate_AP_REQ(self, req_asn1):
+    @staticmethod
+    def validate_AP_REQ(req_asn1):
         pass
 
 
-    def _error_response(self, e):
+    @staticmethod
+    def _error_response(e):
         """ Returns a Response corresponding to some exception e. """
         data = { 'status': 'ERROR',
                  'msg': str(e) }
         return Response(json.dumps(data), mimetype='application/json')
 
-    def handle_urandom(self):
+    @staticmethod
+    def handle_urandom():
         random = os.urandom(URANDOM_BYTES)
         # FIXME: We probably should be using a constant-time encoding
         # scheme here...
