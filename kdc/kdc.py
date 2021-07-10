@@ -60,7 +60,7 @@ def send_request(socks, data):
         delay *= 2
     return None
 
-class WebKDC(object):
+class WebKDC:
 
     def __init__(self, realm=settings.REALM):
         self.realm = realm
