@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# pylint: disable=invalid-name
+
 """ Web-based proxy to a Kerberos KDC for Webathena. """
 import base64
 import json

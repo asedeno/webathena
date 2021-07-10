@@ -1,3 +1,4 @@
+# pylint: disable=invalid-name, too-many-ancestors
 from pyasn1.type import char, constraint, namedtype, tag, univ, useful
 
 # 5.2.1.  KerberosString
