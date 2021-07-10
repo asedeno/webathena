@@ -216,8 +216,10 @@ def create_app():
     return WebKDC()
 
 
-if __name__ == '__main__':
+def main():
+    #pylint: disable=import-outside-toplevel
     import sys
+
     from werkzeug.serving import run_simple
     app = create_app()
     ip = '127.0.0.1'
@@ -226,3 +228,7 @@ if __name__ == '__main__':
         ip, port = sys.argv[1].rsplit(':', 1)
         port = int(port)
     run_simple(ip, port, app, use_debugger=True, use_reloader=True)
+
+
+if __name__ == '__main__':
+    main()
