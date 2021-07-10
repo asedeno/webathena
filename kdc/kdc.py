@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 """ Web-based proxy to a Kerberos KDC for Webathena. """
 import base64
-import dns.resolver
 import json
 import os
 import select
 import socket
 
+import dns.resolver
 from pyasn1.codec.der import decoder as der_decoder
 from pyasn1.codec.der import encoder as der_encoder
 from pyasn1.error import PyAsn1Error
-
 from werkzeug.exceptions import HTTPException
 from werkzeug.routing import Map, Rule
 from werkzeug.wrappers import Request, Response
