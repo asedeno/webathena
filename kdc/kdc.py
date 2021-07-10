@@ -70,11 +70,10 @@ class WebKDC:
     def __init__(self, realm=settings.REALM):
         self.realm = realm
         self.url_map = Map([
-            Rule('/v1/AS_REQ', endpoint=('AS_REQ', krb_asn1.AS_REQ)),
-            Rule('/v1/TGS_REQ',
-                 endpoint=('TGS_REQ', krb_asn1.TGS_REQ)),
-            Rule('/v1/AP_REQ', endpoint=('AP_REQ', krb_asn1.AP_REQ)),
-            Rule('/v1/urandom', endpoint=('urandom', None)),
+            Rule('/v1/AS_REQ', endpoint=('AS_REQ', krb_asn1.AS_REQ), methods=['POST']),
+            Rule('/v1/TGS_REQ', endpoint=('TGS_REQ', krb_asn1.TGS_REQ), methods=['POST']),
+            Rule('/v1/AP_REQ', endpoint=('AP_REQ', krb_asn1.AP_REQ), methods=['POST']),
+            Rule('/v1/urandom', endpoint=('urandom', None), methods=['POST']),
         ])
 
     @staticmethod
@@ -118,9 +117,6 @@ class WebKDC:
         perform additional checks before sending it along.
         """
         req_name, asn1Type = endpoint
-
-        if request.method != 'POST':
-            return self._error_response('Bad method')
 
         if req_name == "urandom":
             return self.handle_urandom()
