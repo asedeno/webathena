@@ -151,7 +151,7 @@ class WebKDC:
             # TODO: The JSON wrapping here is really kinda
             # pointless. Just make this base64 and report errors with
             # HTTP status codes + JSON or whatever.
-            data = {'status': 'OK', 'reply': base64.b64encode(krb_rep)}
+            data = {'status': 'OK', 'reply': base64.b64encode(krb_rep).decode('ascii')}
         # Per Tangled Web, add a defensive Content-Disposition to
         # prevent an extremely confused browser from interpreting this
         # as HTML. Though even navigating to this would be pretty
