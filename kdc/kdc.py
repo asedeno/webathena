@@ -23,7 +23,7 @@ import settings
 MAX_PACKET_SIZE = 4096
 
 # How many bytes of randomness to return
-URANDOM_BYTES = 1024 / 8
+URANDOM_BYTES = 1024 // 8
 
 
 def wait_on_sockets(socks, timeout):
