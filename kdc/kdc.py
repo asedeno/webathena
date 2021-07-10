@@ -66,14 +66,13 @@ def send_request(socks, data):
 
 
 class WebKDC:
-
     def __init__(self, realm=settings.REALM):
         self.realm = realm
         self.url_map = Map([
             Rule('/v1/AS_REQ', endpoint=('AS_REQ', krb_asn1.AS_REQ), methods=['POST']),
             Rule('/v1/TGS_REQ', endpoint=('TGS_REQ', krb_asn1.TGS_REQ), methods=['POST']),
             Rule('/v1/AP_REQ', endpoint=('AP_REQ', krb_asn1.AP_REQ), methods=['POST']),
-            Rule('/v1/urandom', endpoint=('urandom', None), methods=['POST']),
+            Rule('/v1/urandom', endpoint=self.handle_urandom, methods=['POST']),
         ])
 
     @staticmethod
@@ -117,9 +116,6 @@ class WebKDC:
         perform additional checks before sending it along.
         """
         req_name, asn1Type = endpoint
-
-        if req_name == "urandom":
-            return self.handle_urandom()
 
         # Werkzeug docs make a big deal about memory problems if the
         # client sends you MB of data. So, fine, we'll limit it.
@@ -199,6 +195,8 @@ class WebKDC:
         adapter = self.url_map.bind_to_environ(request.environ)
         try:
             endpoint, values = adapter.match()
+            if callable(endpoint):
+                return endpoint()
             return self.proxy_kdc_request(request, endpoint, **values)
         except HTTPException as e:
             return e
