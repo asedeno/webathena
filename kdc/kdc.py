@@ -127,7 +127,7 @@ class WebKDC(object):
 
         try:
             req_der = base64.b64decode(req_b64)
-        except TypeError, e:
+        except TypeError as e:
             return self._error_response(e)
 
         # Make sure we don't send garbage to the KDC. Otherwise it
@@ -138,7 +138,7 @@ class WebKDC(object):
             if rest:
                 raise ValueError('Garbage after request')
             getattr(self, 'validate_' + req_name)(req_asn1)
-        except (PyAsn1Error, ValueError), e:
+        except (PyAsn1Error, ValueError) as e:
             return self._error_response(e)
 
         # Okay, it seems good. Go on and send it, reencoded.
@@ -200,7 +200,7 @@ class WebKDC(object):
         try:
             endpoint, values = adapter.match()
             return self.proxy_kdc_request(request, endpoint, **values)
-        except HTTPException, e:
+        except HTTPException as e:
             return e
 
     def wsgi_app(self, environ, start_response):
