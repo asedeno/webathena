@@ -452,7 +452,7 @@ class KDC_REQ_BODY(univ.Sequence):
                 explicitTag=tag.Tag(tag.tagClassContext,
                                     tag.tagFormatConstructed, 11))),
         )
-    
+
 class KDC_REQ(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.OptionalNamedType(
@@ -482,7 +482,7 @@ class KDC_REQ(univ.Sequence):
     # msg-type values
     msg_type_as = 10
     msg_type_tgs = 12
-    
+
 class AS_REQ(KDC_REQ):
     tagSet = univ.Sequence.tagSet.tagExplicitly(
         tag.Tag(tag.tagClassApplication,
