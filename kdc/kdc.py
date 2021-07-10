@@ -25,6 +25,7 @@ MAX_PACKET_SIZE = 4096
 # How many bytes of randomness to return
 URANDOM_BYTES = 1024 / 8
 
+
 def wait_on_sockets(socks, timeout):
     """
     Selects on a list of UDP sockets until one becomes readable or we
@@ -37,6 +38,7 @@ def wait_on_sockets(socks, timeout):
         if data:
             return data
     return None
+
 
 # Algorithm borrowed from MIT kerberos code. This probably works or
 # something.
@@ -61,6 +63,7 @@ def send_request(socks, data):
             return reply
         delay *= 2
     return None
+
 
 class WebKDC:
 
@@ -90,12 +93,10 @@ class WebKDC:
     def validate_AP_REQ(req_asn1):
         pass
 
-
     @staticmethod
     def _error_response(e):
         """ Returns a Response corresponding to some exception e. """
-        data = { 'status': 'ERROR',
-                 'msg': str(e) }
+        data = {'status': 'ERROR', 'msg': str(e)}
         return Response(json.dumps(data), mimetype='application/json')
 
     @staticmethod
@@ -150,18 +151,15 @@ class WebKDC:
         # Okay, it seems good. Go on and send it, reencoded.
         krb_rep = self.send_krb_request(
             der_encoder.encode(req_asn1),
-            use_master=request.args.has_key('use_master'))
+            use_master='use_master' in request.args)
 
         if krb_rep is None:
-            data = { 'status': 'TIMEOUT' }
+            data = {'status': 'TIMEOUT'}
         else:
             # TODO: The JSON wrapping here is really kinda
             # pointless. Just make this base64 and report errors with
             # HTTP status codes + JSON or whatever.
-            data = {
-                'status': 'OK',
-                'reply': base64.b64encode(krb_rep)
-                }
+            data = {'status': 'OK', 'reply': base64.b64encode(krb_rep)}
         # Per Tangled Web, add a defensive Content-Disposition to
         # prevent an extremely confused browser from interpreting this
         # as HTML. Though even navigating to this would be pretty
@@ -184,7 +182,7 @@ class WebKDC:
         socktype = '_udp'
         srv_query = '%s.%s.%s' % (svctype, socktype, self.realm)
         srv_records = list(dns.resolver.query(srv_query, 'SRV'))
-        srv_records.sort(key = lambda r: r.priority)
+        srv_records.sort(key=lambda r: r.priority)
 
         socks = []
         try:
@@ -223,7 +221,7 @@ def create_app():
 
 
 def main():
-    #pylint: disable=import-outside-toplevel
+    # pylint: disable=import-outside-toplevel
     import sys
 
     from werkzeug.serving import run_simple
