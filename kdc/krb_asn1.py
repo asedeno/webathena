@@ -1,7 +1,8 @@
 from pyasn1.type import char, constraint, namedtype, tag, univ, useful
 
 # 5.2.1.  KerberosString
-class KerberosString(char.GeneralString): pass
+class KerberosString(char.GeneralString):
+    pass
 
 # 5.2.4.  Constrained Integer Types
 class Int32(univ.Integer):
@@ -12,7 +13,8 @@ class Microseconds(univ.Integer):
     subtypeSpec = constraint.ValueRangeConstraint(0, 999999)
 
 # 5.2.2.  Realm and PrincipalName
-class Realm(KerberosString): pass
+class Realm(KerberosString):
+    pass
 
 class PrincipalName(univ.Sequence):
     componentType = namedtype.NamedTypes(
@@ -29,7 +31,8 @@ class PrincipalName(univ.Sequence):
         )
 
 # 5.2.3.  KerberosTime
-class KerberosTime(useful.GeneralizedTime): pass
+class KerberosTime(useful.GeneralizedTime):
+    pass
 
 # 5.2.5.  HostAddress and HostAddresses
 class HostAddress(univ.Sequence):
@@ -74,7 +77,8 @@ class AuthorizationData(univ.SequenceOf):
     componentType = _AuthorizationDataEntry()
 
 # 5.2.6.1.  IF-RELEVANT
-class AD_IF_RELEVANT(AuthorizationData): pass
+class AD_IF_RELEVANT(AuthorizationData):
+    pass
 
 # 5.2.9.  Cryptosystem-Related Types
 class EncryptedData(univ.Sequence):
@@ -165,7 +169,8 @@ class AD_AND_OR(univ.Sequence):
         )
 
 # 5.2.6.4.  MANDATORY-FOR-KDC
-class AD_MANDATORY_FOR_KDC(AuthorizationData): pass
+class AD_MANDATORY_FOR_KDC(AuthorizationData):
+    pass
 
 # 5.2.7.  PA-DATA
 class PA_DATA(univ.Sequence):
@@ -190,7 +195,8 @@ class PA_DATA(univ.Sequence):
     pa_etype_info2 = 19
 
 # 5.2.7.2.  Encrypted Timestamp Pre-authentication
-class PA_ENC_TIMESTAMP(EncryptedData): pass
+class PA_ENC_TIMESTAMP(EncryptedData):
+    pass
 
 class PA_ENC_TS_ENC(univ.Sequence):
     componentType = namedtype.NamedTypes(
@@ -248,7 +254,8 @@ class ETYPE_INFO2(univ.SequenceOf):
     componentType = ETYPE_INFO2_ENTRY()
 
 # 5.2.8.  KerberosFlags
-class KerberosFlags(univ.BitString): pass
+class KerberosFlags(univ.BitString):
+    pass
 
 # 5.3.  Tickets
 class Ticket(univ.Sequence):
