@@ -173,7 +173,7 @@ class WebKDC:
         # supports UDP though.
         socktype = '_udp'
         srv_query = '%s.%s.%s' % (svctype, socktype, self.realm)
-        srv_records = list(dns.resolver.query(srv_query, 'SRV'))
+        srv_records = list(dns.resolver.resolve(srv_query, 'SRV'))
         srv_records.sort(key=lambda r: r.priority)
 
         socks = []
