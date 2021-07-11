@@ -21,7 +21,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      title: 'Caching',
+      title: 'Webathena',
     }),
     new CopyPlugin({
       patterns: [
