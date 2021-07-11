@@ -3,3 +3,5 @@ out
 .tmp
 *.pyc
 src/.htaccess
+dist
+test/dist

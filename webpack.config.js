@@ -84,4 +84,13 @@ module.exports = {
       "crypto": false,
     },
   },
+  watchOptions: {
+    ignored: [
+      // emacs temp/lock files
+      '**/*~',
+      '**/.#*',
+      // vim swap files
+      '**/.*.swp',
+    ],
+  },
 };
