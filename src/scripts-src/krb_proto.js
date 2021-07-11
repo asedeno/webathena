@@ -1,8 +1,5 @@
 "use strict";
-
-if (typeof asn1 === "undefined" && typeof require === "function") {
-    var asn1 = require("./asn1.js");
-}
+const asn1 = require("./asn1.js");
 
 // TODO: Rename this to krb_proto or krb_asn1? Kind of awkward that I
 // have names like krb.PrincipalName as an ASN.1 type and
@@ -67,7 +64,7 @@ krb.Checksum = new asn1.SEQUENCE(
      {id: 'checksum', type: asn1.OCTET_STRING.tagged(asn1.tag(1))}]);
 
 // 5.2.6.2.  KDCIssued
-krb.AD_KDCIssued = new asn1.SEQUENCE( 
+krb.AD_KDCIssued = new asn1.SEQUENCE(
     [{id: 'adChecksum', type: krb.Checksum.tagged(asn1.tag(0))},
      {id: 'iRealm', type: krb.Realm.tagged(asn1.tag(1)), optional: true},
      {id: 'iSname', type: krb.PrincipalName.tagged(asn1.tag(2)),
@@ -538,7 +535,4 @@ krb.EtypeList = new asn1.SEQUENCE_OF(krb.Int32);
 /** @const */ krb.KDC_ERR_CLIENT_NAME_MISMATCH          = 75;
 /** @const */ krb.KDC_ERR_KDC_NAME_MISMATCH             = 76;
 
-// Make this usable as a nodejs module
-if (typeof exports === "object") {
-    module.exports = krb;
-}
+module.exports = krb;

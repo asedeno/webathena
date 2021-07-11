@@ -6,6 +6,8 @@
 
 "use strict";
 
+const arrayutils = require('./arrayutils.js');
+
 /** @namespace Functionality related to ASN.1 */
 var asn1 = { };
 
@@ -776,7 +778,7 @@ asn1.CHOICE.prototype = Object.create(asn1.Type.prototype);
 asn1.CHOICE.prototype.encodeDERTriple = function(object, buffer) {
     var type = object[0], realObj = object[1];
     if (this.choices.indexOf(type) == -1)
-	throw new TypeError("Invalid type");
+        throw new TypeError("Invalid type");
     return type.encodeDERTriple(realObj, buffer);
 };
 
@@ -786,11 +788,11 @@ asn1.CHOICE.prototype.decodeDERPrefix = function(data) {
     var tag = tvr[0], value = tvr[1], rest = tvr[2];
 
     for (var i = 0; i < this.choices.length; i++) {
-	if (tag == this.choices[i].tag) {
-	    // Found it!
-	    return [[this.choices[i],
-		     this.choices[i].decodeDERValue(value)], rest];
-	}
+        if (tag == this.choices[i].tag) {
+            // Found it!
+            return [[this.choices[i],
+                     this.choices[i].decodeDERValue(value)], rest];
+        }
     }
     throw new asn1.Error("Unexpected tag " + tag);
 };

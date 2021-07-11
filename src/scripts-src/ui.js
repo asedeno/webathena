@@ -1,5 +1,11 @@
 "use strict";
 
+const kcrypto = require('./kcrypto.js');
+const krb = require('./krb.js');
+const KDC = require('./kdc.js');
+const arrayutils = require('./arrayutils.js');
+const { log } = require('./util.js');
+
 sjcl.random.startCollectors();
 // Get some randomness from the server; ideally every browser would
 // have a decent source of real randomness, but we don't. We use SJCL,
@@ -216,7 +222,7 @@ $(function() {
             $(this).css({ transform: transform });
         });
     });
-    
+
     $('#whatis a').click(function() {
         $('#info').slideToggle(0)
                   .css('height', $('#info').height())
