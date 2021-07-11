@@ -1,3 +1,3 @@
 "use strict";
 
-const krb = require('./scripts-src/krb.js');
+const krb = require('./js/krb.js');

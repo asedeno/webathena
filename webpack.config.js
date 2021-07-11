@@ -36,7 +36,7 @@ module.exports = {
     }),
     new webpack.ProvidePlugin({
       $: 'jquery',
-      log: [path.resolve(path.join(__dirname, 'src/scripts-src/util.js')), 'log'],
+      log: [path.resolve(path.join(__dirname, 'src/js/util.js')), 'log'],
       Q: 'q',
       sjcl: path.resolve(path.join(__dirname, 'src/contrib/sjcl.js')),
     }),
