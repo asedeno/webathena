@@ -1,5 +1,9 @@
 "use strict";
 
+const krb = require('./krb.js');
+const KDC = require('./kdc.js');
+const WinChan = require('winchan')
+
 // Friendly names of known service principals.
 // TODO(davidben): Cross-realm?
 // TODO(davidben): Move this to a config.js.
@@ -235,3 +239,40 @@ function registerTicketAPI() {
         }).done();
     });
 }
+
+function getTGTSession() {
+    // Blow away ccache on format changes.
+    var currentVersion = '1';
+    if (localStorage.getItem('version') !== currentVersion) {
+        localStorage.clear();
+        localStorage.setItem('version', currentVersion);
+    }
+
+    // Check if we're already logged in.
+    var sessionJson = localStorage.getItem('tgtSession');
+    if (sessionJson) {
+        var tgtSession = krb.Session.fromDict(JSON.parse(sessionJson));
+        // Treat as expired if we have less than an hour left. It'd be
+        // poor to give clients an old ticket.
+        if (tgtSession.timeRemaining() < 60 * 60 * 1000) {
+            return showRenewPrompt(tgtSession).then(function(tgtSession) {
+                // Save in local storage.
+                localStorage.setItem('tgtSession',
+                                     JSON.stringify(tgtSession.toDict()));
+                return [tgtSession, true];
+            });
+        }
+        return Q.resolve([tgtSession, false]);
+    }
+
+    return showLoginPrompt().then(function(tgtSession) {
+        // Save in local storage.
+        localStorage.setItem('tgtSession',
+                             JSON.stringify(tgtSession.toDict()));
+        return [tgtSession, true];
+    });
+}
+
+
+module.exports.registerTicketAPI = registerTicketAPI;
+module.exports.getTGTSession = getTGTSession;

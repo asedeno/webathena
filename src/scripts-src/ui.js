@@ -5,6 +5,7 @@ const krb = require('./krb.js');
 const KDC = require('./kdc.js');
 const arrayutils = require('./arrayutils.js');
 const { log } = require('./util.js');
+const { registerTicketAPI, getTGTSession } = require('./request_ticket.js')
 
 sjcl.random.startCollectors();
 // Get some randomness from the server; ideally every browser would
@@ -173,39 +174,6 @@ function showRenewPrompt(oldSession) {
     return handleLoginPrompt(login);
 }
 
-
-function getTGTSession() {
-    // Blow away ccache on format changes.
-    var currentVersion = '1';
-    if (localStorage.getItem('version') !== currentVersion) {
-        localStorage.clear();
-        localStorage.setItem('version', currentVersion);
-    }
-
-    // Check if we're already logged in.
-    var sessionJson = localStorage.getItem('tgtSession');
-    if (sessionJson) {
-        var tgtSession = krb.Session.fromDict(JSON.parse(sessionJson));
-        // Treat as expired if we have less than an hour left. It'd be
-        // poor to give clients an old ticket.
-        if (tgtSession.timeRemaining() < 60 * 60 * 1000) {
-            return showRenewPrompt(tgtSession).then(function(tgtSession) {
-                // Save in local storage.
-                localStorage.setItem('tgtSession',
-                                     JSON.stringify(tgtSession.toDict()));
-                return [tgtSession, true];
-            });
-        }
-        return Q.resolve([tgtSession, false]);
-    }
-
-    return showLoginPrompt().then(function(tgtSession) {
-        // Save in local storage.
-        localStorage.setItem('tgtSession',
-                             JSON.stringify(tgtSession.toDict()));
-        return [tgtSession, true];
-    });
-}
 
 $(function() {
     $('#eye1').css({ left: 78, top: 12 }).removeAttr('hidden');
