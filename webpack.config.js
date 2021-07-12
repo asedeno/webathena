@@ -30,7 +30,7 @@ module.exports = {
       },
     },
     ui: {
-      import: './src/index.js',
+      import: './src/ui.js',
       dependOn: 'webathena',
     },
   },
