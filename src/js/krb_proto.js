@@ -1,5 +1,5 @@
 "use strict";
-const asn1 = require("./asn1.js");
+import asn1 from "./asn1.js";
 
 // TODO: Rename this to krb_proto or krb_asn1? Kind of awkward that I
 // have names like krb.PrincipalName as an ASN.1 type and
@@ -535,4 +535,4 @@ krb.EtypeList = new asn1.SEQUENCE_OF(krb.Int32);
 /** @const */ krb.KDC_ERR_CLIENT_NAME_MISMATCH          = 75;
 /** @const */ krb.KDC_ERR_KDC_NAME_MISMATCH             = 76;
 
-module.exports = krb;
+export default krb;

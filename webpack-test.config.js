@@ -28,10 +28,10 @@ module.exports = (env) => {
 
         // Our modules
         log: [path.resolve(path.join(__dirname, 'src/js/util.js')), 'log'],
-        arrayutils: path.resolve(path.join(__dirname, 'src/js/arrayutils.js')),
-        asn1: path.resolve(path.join(__dirname, 'src/js/asn1.js')),
-        kcrypto: path.resolve(path.join(__dirname, 'src/js/kcrypto.js')),
-        krb: path.resolve(path.join(__dirname, 'src/js/krb.js')),
+        arrayutils: [path.resolve(path.join(__dirname, 'src/js/arrayutils.js')), 'default'],
+        asn1: [path.resolve(path.join(__dirname, 'src/js/asn1.js')), 'default'],
+        kcrypto: [path.resolve(path.join(__dirname, 'src/js/kcrypto.js')), 'default'],
+        krb: [path.resolve(path.join(__dirname, 'src/js/krb.js')), 'default'],
 
         // Our test utilities
         arrayToHex: [path.resolve(path.join(__dirname, 'test/lib/test-utils.js')), 'arrayToHex'],

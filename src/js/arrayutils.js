@@ -166,4 +166,4 @@ arrayutils.equals = function(a, b) {
     return true;
 };
 
-module.exports = arrayutils;
+export default arrayutils;

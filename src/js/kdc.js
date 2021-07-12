@@ -41,9 +41,9 @@ Crypto.retryForEntropy = function (action) {
     return deferred.promise;
 };
 
-const arrayutils = require('./arrayutils.js');
-const kcrypto = require('./kcrypto.js');
-const krb = require('./krb.js');
+import arrayutils from './arrayutils.js';
+import kcrypto from './kcrypto.js';
+import krb from './krb.js';
 
 var KDC = {};
 
@@ -419,4 +419,4 @@ KDC.getServiceSession = function(session, service) {
     });
 };
 
-module.exports = KDC;
+export default KDC;

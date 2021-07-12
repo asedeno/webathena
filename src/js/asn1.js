@@ -6,7 +6,7 @@
 
 "use strict";
 
-const arrayutils = require('./arrayutils.js');
+import arrayutils from './arrayutils.js';
 
 /** @namespace Functionality related to ASN.1 */
 var asn1 = { };
@@ -797,7 +797,5 @@ asn1.CHOICE.prototype.decodeDERPrefix = function(data) {
     throw new asn1.Error("Unexpected tag " + tag);
 };
 
-// Make this usable as a nodejs module
-if (typeof exports === "object") {
-    module.exports = asn1;
-}
+
+export default asn1;

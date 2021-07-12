@@ -1,12 +1,12 @@
 "use strict";
 
-const kcrypto = require('./kcrypto.js');
-const krb = require('./krb.js');
-const KDC = require('./kdc.js');
-const SERVICES = require('./services.js');
-const arrayutils = require('./arrayutils.js');
-const WinChan = require('winchan')
-const { log } = require('./util.js');
+import kcrypto from './kcrypto.js';
+import krb from './krb.js';
+import KDC from './kdc.js';
+import SERVICES from './services.js';
+import arrayutils from './arrayutils.js';
+import WinChan from 'winchan';
+import { log } from './util.js';
 
 sjcl.random.startCollectors();
 // Get some randomness from the server; ideally every browser would

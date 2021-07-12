@@ -1,8 +1,8 @@
 "use strict";
 
-const arrayutils = require('./arrayutils.js');
-const kcrypto = require('./kcrypto.js');
-var krb = require('./krb_proto.js');
+import arrayutils from './arrayutils.js';
+import kcrypto from './kcrypto.js';
+import krb from'./krb_proto.js';
 
 /** @const */ krb.realm = "ATHENA.MIT.EDU"; // XXX
 /** @const */ krb.supportedEnctypes = [
@@ -331,4 +331,4 @@ krb.Session.prototype.makeAPReq = function(keyUsage,
     };
 };
 
-module.exports = krb;
+export default krb;

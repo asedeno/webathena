@@ -7,9 +7,7 @@
 // Only place in first file of each bundle.
 "use strict";
 
-function log(arg) {
+export function log(arg) {
     if (typeof console != "undefined" && console.log)
         console.log(arg);
 }
-
-module.exports.log = log;

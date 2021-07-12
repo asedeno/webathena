@@ -1,6 +1,6 @@
 "use strict";
 
-const arrayutils = require('./arrayutils.js');
+import arrayutils from './arrayutils.js';
 
 var kcrypto = { };
 
@@ -574,4 +574,4 @@ kcrypto.getChecksumProfile = function(sumtype) {
     throw new kcrypto.NotSupportedError("Unsupported sumtype: " + sumtype);
 };
 
-module.exports = kcrypto;
+export default kcrypto;

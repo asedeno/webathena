@@ -13,8 +13,23 @@ module.exports = {
     webathena: {
       import: './src/webathena.js',
       filename: 'webathena.js',
+      library: {
+        name: 'krb',
+        type: 'umd',
+        export: 'default',
+      },
     },
-    index: {
+    gss: {
+      import: './src/gss.js',
+      filename: 'gss.js',
+      dependOn: 'webathena',
+      library: {
+        name: 'gss',
+        type: 'umd',
+        export: 'default',
+      },
+    },
+    ui: {
       import: './src/index.js',
       dependOn: 'webathena',
     },
@@ -22,12 +37,13 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       title: 'Webathena',
+      inject: true,
+      chunks: ['webathena', 'ui'],
     }),
     new CopyPlugin({
       patterns: [
         { from: "src/favicon.ico" },
         { from: "src/kdc.fcgi" },
-        { from: "src/gss.js" },
         { from: "src/relay.html" },
       ],
     }),
@@ -68,7 +84,7 @@ module.exports = {
       }),
     ],
     moduleIds: 'deterministic',
-    runtimeChunk: 'single',
+    // runtimeChunk: 'single',
     splitChunks: {
       cacheGroups: {
         vendor: {

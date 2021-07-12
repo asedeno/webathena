@@ -1,6 +1,6 @@
 "use strict";
 
-const krb = require('./krb.js');
+import krb from './krb.js';
 
 // Friendly names of known service principals.
 // TODO(davidben): Cross-realm?
@@ -22,6 +22,6 @@ SERVICES["zephyr/zephyr" + "@" + krb.realm] = {
     desc: "Send and receive zephyr notices as you"
 };
 
-module.exports = SERVICES;
+export default SERVICES;
 
 

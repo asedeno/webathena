@@ -1,3 +1,4 @@
 "use strict";
+import krb from './js/krb.js';
 
-const krb = require('./js/krb.js');
+export default krb;
