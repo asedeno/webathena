@@ -8,7 +8,7 @@
     "test:once": "webpack --config webpack-test.config.js",
     "watch": "webpack --watch",
     "server": "node server.js",
-    "build": "webpack"
+    "build": "webpack && chmod +x dist/kdc.fcgi"
   },
   "keywords": [
     "webathena",
