@@ -47,7 +47,7 @@ import krb from './krb.js';
 
 var KDC = {};
 
-KDC.urlBase = '/kdc/v1/';
+KDC.urlBase = './kdc/v1/';
 
 /** @constructor */
 KDC.Error = function(code, message) {
