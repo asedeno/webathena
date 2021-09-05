@@ -32,7 +32,7 @@ KDC.xhrRequest(null, 'urandom').then(function(data) {
         arr.push(words[i]);
     }
     sjcl.random.addEntropy(arr, arr.length * 32, 'server');
-}).done();
+});
 
 function UserError(message) {
     this.message = message;
@@ -155,7 +155,6 @@ function handleLoginPrompt(login) {
 }
 
 function showLoginPrompt() {
-    var deferred = Q.defer();
     var login = $('#login-template').children().clone();
     login.appendTo(document.body);
     login.find('.username').focus();
@@ -164,7 +163,6 @@ function showLoginPrompt() {
 }
 
 function showRenewPrompt(oldSession) {
-    var deferred = Q.defer();
     var login = $('#renew-template').children().clone();
     var principalStr = oldSession.client.toString();
     login.find('.client-principal').text(principalStr);

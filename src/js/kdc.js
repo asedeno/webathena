@@ -17,28 +17,10 @@ Crypto.randomNonce = function() {
     return word;
 };
 
-Crypto.retryForEntropy = function (action) {
-    var deferred = Q.defer();
-    // We can maybe be more awesome and note that SJCL never needs to
-    // re-seed its PRNG once its been seeded initially.
-    var retry = function() {
-        sjcl.random.removeEventListener("seeded", retry);
-        try {
-            deferred.resolve(action());
-        } catch (e) {
-            if (e instanceof sjcl.exception.notReady) {
-                // Retry when we have more entropy. There should
-                // ideally be a callback, but we ask for entropy from
-                // the server on page load, so it should resolve
-                // itself quickly.
-                sjcl.random.addEventListener("seeded", retry);
-            } else {
-                deferred.reject(e);
-            }
-        }
-    };
-    retry();
-    return deferred.promise;
+Crypto.waitForEntropy = async function () {
+    while (!sjcl.random.isReady()) {
+        await sleep(250);
+    }
 };
 
 import arrayutils from './arrayutils.js';
@@ -72,87 +54,86 @@ KDC.ProtocolError.prototype.toString = function() {
     return "Protocol error: " + this.message;
 };
 
-KDC.xhrRequest = function(data, target) {
-    var deferred = Q.defer();
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', KDC.urlBase + target);
-    xhr.onreadystatechange = function (e) {
-        if (this.readyState != 4)
-            return;
-        if (this.status == 200) {
-            deferred.resolve(this.responseText);
-        } else if (this.status) {
-            deferred.reject(new KDC.NetworkError(
-                'HTTP error ' + this.status + ': ' + this.statusText));
-        } else {
-            deferred.reject(new KDC.NetworkError('Network error'));
-        }
+KDC.xhrRequest = async function(data, target) {
+    var init = {
+        method: 'POST'
     };
     if (data) {
-        xhr.setRequestHeader('Content-Type', 'text/plain');
-        xhr.send(arrayutils.toBase64(data));
-    } else {
-        xhr.send();
+        init.headers = {
+            'Content-Type': 'text/plain'
+        };
+        init.body = arrayutils.toBase64(data);
     }
-    return deferred.promise;
-};
-
-KDC.kdcProxyRequest = function(data, target, outputType, useMaster) {
-    if (useMaster)
-        target += '?use_master';
-    return KDC.xhrRequest(data, target).then(function(responseText) {
-        var data = JSON.parse(responseText);
-        switch (data.status) {
-        case 'ERROR':
-            throw new KDC.NetworkError(data.msg);
-        case 'TIMEOUT':
-            throw new KDC.NetworkError('KDC connection timed out');
-        case 'OK':
-            var der = arrayutils.fromBase64(data.reply);
-            return outputType.decodeDER(der)[1];
+    const response = await fetch(KDC.urlBase + target, init);
+    if (response.ok) {
+        return response.text();
+    } else if (response.type == 'error') {
+        throw response.error();
+    } else {
+        var message = 'HTTP error ' + response.status;
+        if (response.statusText) {
+            message += ': ' + response.statusText;
         }
-    });
+        throw new KDC.NetworkError(message);
+    }
 };
 
-KDC.asReq = function(principal, padata, useMaster) {
-    return Crypto.retryForEntropy(function () {
-        var asReq = {};
-        asReq.pvno = krb.pvno;
-        asReq.msgType = krb.KRB_MT_AS_REQ;
-        // TODO: padata will likely want to be a more interesting
-        // callback for ones which depend on, say, the reqBody.
-        if (padata != null)
-            asReq.padata = padata;
+KDC.kdcProxyRequest = async function(data, target, outputType, useMaster) {
+    if (useMaster) {
+        target += '?use_master';
+    }
+    const respText = await KDC.xhrRequest(data, target);
+    const respData = JSON.parse(respText);
+    switch (respData.status) {
+    case 'ERROR':
+        throw new KDC.NetworkError(respData.msg);
+    case 'TIMEOUT':
+        throw new KDC.NetworkError('KDC connection timed out');
+    case 'OK':
+        var der = arrayutils.fromBase64(respData.reply);
+        return outputType.decodeDER(der)[1];
+    }
+};
 
-        // FIXME: This is obnoxious. Also constants.
-        asReq.reqBody = {};
-        // TODO: Pick a reasonable set of flags. These are just
-        // taken from a wireshark trace.
-        asReq.reqBody.kdcOptions = krb.KDCOptions.make(
-            krb.KDCOptions.forwardable,
-            krb.KDCOptions.proxiable,
-            krb.KDCOptions.renewable_ok);
+KDC.asReq = async function(principal, padata, useMaster) {
+    await Crypto.waitForEntropy();
+    var asReq = {};
+    asReq.pvno = krb.pvno;
+    asReq.msgType = krb.KRB_MT_AS_REQ;
+    // TODO: padata will likely want to be a more interesting
+    // callback for ones which depend on, say, the reqBody.
+    if (padata != null)
+        asReq.padata = padata;
 
-        if (principal.realm != krb.realm)
-            throw "Cross-realm not supported!";
-        asReq.reqBody.principalName = principal.principalName;
+    // FIXME: This is obnoxious. Also constants.
+    asReq.reqBody = {};
+    // TODO: Pick a reasonable set of flags. These are just
+    // taken from a wireshark trace.
+    asReq.reqBody.kdcOptions = krb.KDCOptions.make(
+        krb.KDCOptions.forwardable,
+        krb.KDCOptions.proxiable,
+        krb.KDCOptions.renewable_ok);
 
-        asReq.reqBody.realm = krb.realm;
+    if (principal.realm != krb.realm)
+        throw "Cross-realm not supported!";
+    asReq.reqBody.principalName = principal.principalName;
 
-        asReq.reqBody.sname = {};
-        asReq.reqBody.sname.nameType = krb.KRB_NT_SRV_INST;
-        asReq.reqBody.sname.nameString = [ 'krbtgt', krb.realm ];
+    asReq.reqBody.realm = krb.realm;
 
-        asReq.reqBody.till = new Date(0);
-        asReq.reqBody.nonce = Crypto.randomNonce();
-        asReq.reqBody.etype = krb.supportedEnctypes;
+    asReq.reqBody.sname = {};
+    asReq.reqBody.sname.nameType = krb.KRB_NT_SRV_INST;
+    asReq.reqBody.sname.nameString = [ 'krbtgt', krb.realm ];
 
-        return KDC.kdcProxyRequest(krb.AS_REQ.encodeDER(asReq),
-                                   'AS_REQ', krb.AS_REP_OR_ERROR, useMaster)
-            .then(function (asRep) {
-                return { asReq: asReq, asRep: asRep };
-            });
-    });
+    asReq.reqBody.till = new Date(0);
+    asReq.reqBody.nonce = Crypto.randomNonce();
+    asReq.reqBody.etype = krb.supportedEnctypes;
+
+    var asRep = await KDC.kdcProxyRequest(krb.AS_REQ.encodeDER(asReq),
+                                          'AS_REQ', krb.AS_REP_OR_ERROR, useMaster);
+    return {
+        asReq: asReq,
+        asRep: asRep,
+    };
 };
 
 function extractPreAuthHint(methodData) {
@@ -205,9 +186,9 @@ function keyFromPassword(etypeInfo, principal, password) {
 
 var padataHandlers = { };
 // TODO: Implement other types of PA-DATA.
-padataHandlers[krb.PA_ENC_TIMESTAMP] = function(asReq, asRep, methodData,
-                                                paData, principal,
-                                                password) {
+padataHandlers[krb.PA_ENC_TIMESTAMP] = async function(asReq, asRep, methodData,
+                                                      paData, principal,
+                                                      password) {
     var etypeInfos = extractPreAuthHint(methodData);
     var etypeInfo = null;
     // Find an enctype we support.
@@ -224,23 +205,23 @@ padataHandlers[krb.PA_ENC_TIMESTAMP] = function(asReq, asRep, methodData,
     var key = keyFromPassword(etypeInfo, principal, password);
 
     // Encrypt a timestamp.
-    return Crypto.retryForEntropy(function () {
-        var ts = { };
-        ts.patimestamp = new Date();
-        ts.pausec = ts.patimestamp.getUTCMilliseconds() * 1000;
-        ts.patimestamp.setUTCMilliseconds(0);
-        var encTs = key.encryptAs(
-            krb.ENC_TS_ENC, krb.KU_AS_REQ_PA_ENC_TIMESTAMP, ts);
-        return {
-            padataType: krb.PA_ENC_TIMESTAMP,
-            padataValue: krb.ENC_TIMESTAMP.encodeDER(encTs)
-        };
-    });
+    await Crypto.waitForEntropy();
+    var ts = { };
+    ts.patimestamp = new Date();
+    ts.pausec = ts.patimestamp.getUTCMilliseconds() * 1000;
+    ts.patimestamp.setUTCMilliseconds(0);
+    var encTs = key.encryptAs(
+        krb.ENC_TS_ENC, krb.KU_AS_REQ_PA_ENC_TIMESTAMP, ts);
+    return {
+        padataType: krb.PA_ENC_TIMESTAMP,
+        padataValue: krb.ENC_TIMESTAMP.encodeDER(encTs)
+    };
 };
 
-KDC.getTGTSession = function (principal, password, useMaster) {
-    var result = KDC.asReq(principal, null, useMaster).then(function (ret) {
-        var asReq = ret.asReq, asRep = ret.asRep;
+KDC.getTGTSession = async function (principal, password, useMaster) {
+    try {
+        var { asReq, asRep } = await KDC.asReq(principal, null, useMaster);
+
         // Handle pre-authentication.
         if (asRep.msgType == krb.KRB_MT_ERROR &&
             asRep.errorCode == krb.KDC_ERR_PREAUTH_REQUIRED) {
@@ -252,22 +233,13 @@ KDC.getTGTSession = function (principal, password, useMaster) {
                 if (methodData[i].padataType in padataHandlers) {
                     // Found one we have a handler for. Pre-auth
                     // and redo the request.
-                    return padataHandlers[methodData[i].padataType](
+                    var padata = await padataHandlers[methodData[i].padataType](
                         asReq, asRep, methodData, methodData[i],
-                        principal, password
-                    ).then(function(padata) {
-                        // Make a new AS-REQ with our PA-DATA and
-                        // process that.
-                        return KDC.asReq(principal, [padata], useMaster);
-                    });
+                        principal, password);
+                    ({ asReq, asRep } = await KDC.asReq(principal, [padata], useMaster));
                 }
             }
         }
-        // Not a request for pre-auth. Process whatever we got.
-        return ret;
-    }).then(function (ret) {
-        var asReq = ret.asReq, asRep = ret.asRep;
-
         // Handle errors.
         if (asRep.msgType == krb.KRB_MT_ERROR)
             throw new KDC.Error(asRep.errorCode, asRep.eText);
@@ -292,28 +264,26 @@ KDC.getTGTSession = function (principal, password, useMaster) {
         // The key usage value for encrypting this field is 3 in
         // an AS-REP message, using the client's long-term key or
         // another key selected via pre-authentication mechanisms.
-        return KDC.sessionFromKDCRep(key, krb.KU_AS_REQ_ENC_PART,
-                                     asReq, asRep);
-    });
-
-    // On failure, fall back to the master, a la MIT Kerberos.
-    // TODO(davidben): Don't fallback if we happened to be talking
-    // to the master anyway.
-    if (!useMaster) {
-        result = result.then(null, function(oldErr) {
-            log('Falling back to master');
-            return KDC.getTGTSession(
-                principal, password, true
-            ).then(null, function(err) {
-                if (err instanceof KDC.NetworkError) {
-                    log('Could not reach master: ' + err);
-                    throw oldErr;
+        return await KDC.sessionFromKDCRep(key, krb.KU_AS_REQ_ENC_PART,
+                                             asReq, asRep);
+    } catch (err1) {
+        // On failure, fall back to the master, a la MIT Kerberos.
+        // TODO(davidben): Don't fallback if we happened to be talking
+        // to the master anyway.
+        if (!useMaster) {
+            log('Falling back to master', err1);
+            try {
+                return await KDC.getTGTSession(principal, password, true);
+            } catch (err2) {
+                if (err2 instanceof KDC.NetworkError) {
+                    log('Could not reach master: ' + err2);
+                    throw err1;
                 }
-                throw err;
-            });
-        });
+                throw err2;
+            }
+        }
+        throw err1;
     }
-    return result;
 };
 
 KDC.sessionFromKDCRep = function (key, keyUsage, kdcReq, kdcRep) {
@@ -364,59 +334,55 @@ KDC.sessionFromKDCRep = function (key, keyUsage, kdcReq, kdcRep) {
     // authtime?
 };
 
-KDC.getServiceSession = function(session, service) {
-    return Crypto.retryForEntropy(function() {
-        var tgsReq = { };
-        tgsReq.pvno = krb.pvno;
-        tgsReq.msgType = krb.KRB_MT_TGS_REQ;
+KDC.getServiceSession = async function(session, service) {
+    await Crypto.waitForEntropy();
+    var tgsReq = { };
+    tgsReq.pvno = krb.pvno;
+    tgsReq.msgType = krb.KRB_MT_TGS_REQ;
 
-        tgsReq.reqBody = { };
-        // TODO: What flags?
-        tgsReq.reqBody.kdcOptions = krb.KDCOptions.make(
-            krb.KDCOptions.forwardable);
-        tgsReq.reqBody.sname = service.principalName;
-        tgsReq.reqBody.realm = service.realm;
+    tgsReq.reqBody = { };
+    // TODO: What flags?
+    tgsReq.reqBody.kdcOptions = krb.KDCOptions.make(
+        krb.KDCOptions.forwardable);
+    tgsReq.reqBody.sname = service.principalName;
+    tgsReq.reqBody.realm = service.realm;
 
-        // TODO: Do we want to request the maximum end time? Seems a
-        // reasonable default I guess.
-        tgsReq.reqBody.till = new Date(0);
-        tgsReq.reqBody.nonce = Crypto.randomNonce();
-        tgsReq.reqBody.etype = krb.supportedEnctypes;
+    // TODO: Do we want to request the maximum end time? Seems a
+    // reasonable default I guess.
+    tgsReq.reqBody.till = new Date(0);
+    tgsReq.reqBody.nonce = Crypto.randomNonce();
+    tgsReq.reqBody.etype = krb.supportedEnctypes;
 
-        // Checksum the reqBody. Note: if our DER encoder isn't completely
-        // correct, the proxy will re-encode it and possibly mess up the
-        // checksum. This is probably a little poor.
-        var checksum = session.key.checksum(
-            krb.KU_TGS_REQ_PA_TGS_REQ_CKSUM,
-            krb.KDC_REQ_BODY.encodeDER(tgsReq.reqBody));
+    // Checksum the reqBody. Note: if our DER encoder isn't completely
+    // correct, the proxy will re-encode it and possibly mess up the
+    // checksum. This is probably a little poor.
+    var checksum = session.key.checksum(
+        krb.KU_TGS_REQ_PA_TGS_REQ_CKSUM,
+        krb.KDC_REQ_BODY.encodeDER(tgsReq.reqBody));
 
-        // Requests for additional tickets (KRB_TGS_REQ) MUST contain a
-        // padata of PA-TGS-REQ.
-        var apReq = session.makeAPReq(
-            krb.KU_TGS_REQ_PA_TGS_REQ, checksum).apReq;
-        tgsReq.padata = [{ padataType: krb.PA_TGS_REQ,
-                           padataValue: krb.AP_REQ.encodeDER(apReq) }];
+    // Requests for additional tickets (KRB_TGS_REQ) MUST contain a
+    // padata of PA-TGS-REQ.
+    var apReq = session.makeAPReq(
+        krb.KU_TGS_REQ_PA_TGS_REQ, checksum).apReq;
+    tgsReq.padata = [{ padataType: krb.PA_TGS_REQ,
+                       padataValue: krb.AP_REQ.encodeDER(apReq) }];
 
-        return KDC.kdcProxyRequest(krb.TGS_REQ.encodeDER(tgsReq),
-                                   'TGS_REQ', krb.TGS_REP_OR_ERROR)
-            .then(function (tgsRep) {
-                if(tgsRep.msgType == krb.KRB_MT_ERROR)
-                    throw new KDC.Error(tgsRep.errorCode, tgsRep.eText);
+    var tgsRep = await KDC.kdcProxyRequest(krb.TGS_REQ.encodeDER(tgsReq),
+                                           'TGS_REQ', krb.TGS_REP_OR_ERROR);
+    if (tgsRep.msgType == krb.KRB_MT_ERROR)
+        throw new KDC.Error(tgsRep.errorCode, tgsRep.eText);
 
-                // When the KRB_TGS_REP is received by the client, it
-                // is processed in the same manner as the KRB_AS_REP
-                // processing described above.  The primary difference
-                // is that the ciphertext part of the response must be
-                // decrypted using the sub-session key from the
-                // Authenticator, if it was specified in the request,
-                // or the session key from the TGT, rather than the
-                // client's secret key.
-                //
-                // If we use a subkey, the usage might change I think.
-                return KDC.sessionFromKDCRep(
-                    session.key, krb.KU_TGS_REQ_ENC_PART, tgsReq, tgsRep);
-            });
-    });
+    // When the KRB_TGS_REP is received by the client, it is processed
+    // in the same manner as the KRB_AS_REP processing described
+    // above.  The primary difference is that the ciphertext part of
+    // the response must be decrypted using the sub-session key from
+    // the Authenticator, if it was specified in the request, or the
+    // session key from the TGT, rather than the client's secret key.
+    //
+    // If we use a subkey, the usage might change I think.
+    return KDC.sessionFromKDCRep(
+        session.key, krb.KU_TGS_REQ_ENC_PART, tgsReq, tgsRep);
+
 };
 
 export default KDC;
