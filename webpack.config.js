@@ -53,7 +53,6 @@ module.exports = {
     new webpack.ProvidePlugin({
       $: 'jquery',
       log: [path.resolve(path.join(__dirname, 'src/js/util.js')), 'log'],
-      Q: 'q',
       sjcl: path.resolve(path.join(__dirname, 'src/contrib/sjcl.js')),
     }),
   ],
@@ -68,7 +67,10 @@ module.exports = {
       }, {
         test: /\.png$/i,
         type: 'asset/resource',
-      }
+      }, {
+        test: /\.ts$/,
+        loader: 'ts-loader',
+      },
     ],
   },
   output: {
@@ -96,6 +98,7 @@ module.exports = {
     },
   },
   resolve: {
+    extensions: ['.tsx', '.ts', '.js'],
     fallback: {
       "crypto": false,
     },
