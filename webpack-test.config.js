@@ -19,7 +19,6 @@ module.exports = (env) => {
     plugins: [
       new webpack.ProvidePlugin({
         // node-installed things
-        $: 'jquery',
         Q: 'q',
         assert: ['chai', 'assert'],
 

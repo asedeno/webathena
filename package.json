@@ -1,7 +1,7 @@
 {
   "name": "webathena",
   "version": "1.0.0",
-  "description": "a browser-centric implementation of the Kerberso network authentication protocol.",
+  "description": "a browser-centric implementation of the Kerberos network authentication protocol.",
   "private": true,
   "scripts": {
     "test": "webpack --watch --config webpack-test.config.js",
@@ -56,7 +56,6 @@
     "webpack-shell-plugin-next": "^2.2.2"
   },
   "dependencies": {
-    "jquery": "^3.6.0",
     "winchan": "^0.2.2"
   }
 }

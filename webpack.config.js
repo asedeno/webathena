@@ -51,7 +51,6 @@ module.exports = {
       filename: '[name].[contenthash].css',
     }),
     new webpack.ProvidePlugin({
-      $: 'jquery',
       log: [path.resolve(path.join(__dirname, 'src/js/util.js')), 'log'],
       sjcl: path.resolve(path.join(__dirname, 'src/contrib/sjcl.js')),
     }),

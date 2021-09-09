@@ -26,15 +26,16 @@ html, body {
 }
 
 #info {
-    display: none;
-    padding: 0.5em;
-    margin-bottom: 24px;
     font-size: 12pt;
+    height: 0;
+    overflow: hidden;
+    transition: height 0.4s;
 }
 
 #info table {
     width: 100%;
     table-layout: fixed;
+    padding: 8px 8px 32px;
 }
 
 #info table tr:nth-child(1) {
