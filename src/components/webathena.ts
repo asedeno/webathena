@@ -31,13 +31,15 @@ export class WebathenaUI extends LitElement {
 
   @state() protected _usernameError: boolean = false;
   @state() protected _passwordError: boolean = false;
-  @state() protected _tgtSession = null;
+  @state() protected _defaultPrincipal = null;
+  @state() protected _ccache = [];
+  @state() protected _ccacheIndex = {};
   @state() protected _tktReq: boolean = false;
   @state() protected _tktReqData: WinChanArgs | null = null;
 
   constructor() {
     super();
-    this.loadTGTSession();
+    this.loadCCache();
     if (window.location.hash == '#!request_ticket_v1') {
       this._tktReq = true;
       WinChan.onOpen(this._tktReqOnOpen);
@@ -48,29 +50,51 @@ export class WebathenaUI extends LitElement {
   // Utility methods
 
 
-  protected static _ccacheVersion: string = '1';
+  protected static _ccacheVersion: string = '2';
 
-  loadTGTSession() {
+  loadCCache() {
     if (localStorage.getItem('version') !== WebathenaUI._ccacheVersion) {
       localStorage.clear();
       localStorage.setItem('version', WebathenaUI._ccacheVersion);
     }
 
-    var sessionJson = localStorage.getItem('tgtSession');
-    if (sessionJson) {
+    let defaultPrincipal = localStorage.getItem('defaultPrincipal');
+    if (defaultPrincipal) {
+      this._defaultPrincipal = krb.Principal.fromString(defaultPrincipal);
+    }
+
+    let ccacheJson = localStorage.getItem('ccache');
+    if (ccacheJson) {
+      let ccache = JSON.parse(ccacheJson);
       try {
-        this._tgtSession = krb.Session.fromDict(JSON.parse(sessionJson));
+        this._ccache = ccache.map(
+          (tktDict, idx) => {
+            let session = krb.Session.fromDict(tktDict);
+            this._ccacheIndex[session.service.toString()] = idx;
+            return session;
+          }
+        );
       } catch (err) {
         this._logout();
       }
     }
   }
 
-  saveTGTSession() {
-    if (this._tgtSession) {
+  saveCCache() {
+    if (this._ccache || this._defaultPrincipal) {
       localStorage.setItem('version', WebathenaUI._ccacheVersion);
-      localStorage.setItem('tgtSession', JSON.stringify(this._tgtSession.toDict()));
+      if (this._defaultPrincipal) {
+        localStorage.setItem('defaultPrincipal', this._defaultPrincipal.toString());
       }
+      if (this._ccache) {
+        localStorage.setItem(
+          'ccache',
+          JSON.stringify(this._ccache.map(
+            (entry) => entry.toDict()
+          ))
+        )
+      }
+    }
   }
 
   private _tktReqOnOpen = (origin, args, cb) => {
@@ -214,12 +238,12 @@ export class WebathenaUI extends LitElement {
         <form>
           <div class="login-message">Your login has expired.</div>
           <table class="form-box">
-            <tr><td colspan=2 class="client-principal identifier">${this._tgtSession.client.toString()}</td></tr>
+            <tr><td colspan=2 class="client-principal identifier">${this._defaultPrincipal.toString()}</td></tr>
             <tr>
               <td><label for="password">Password</label></td>
               <td>
                 <div class="container">
-                  <input class="username" type="hidden" value="${this._tgtSession.client.toString()}">
+                  <input class="username" type="hidden" value="${this._defaultPrincipal.toString()}">
                   <input class="password" type="password" autocomplete="off">
                   ${this._passwordError ? this.errorElement('password') : ''}
                 </div>
@@ -240,12 +264,23 @@ export class WebathenaUI extends LitElement {
     `;
   }
 
+  render_klist_ccache_node(entry) {
+    let startTime = entry.starttime || entry.authtime;
+    let endTime = entry.endtime;
+    return html`
+      <div class="service-ticket">${entry.service.toString()}</div>
+    `;
+  };
+
   render_klist() {
     return html`
       <div class="authed body">
         <p>You are logged in as</p>
-        <p class="client-principal identifier">${this._tgtSession.client.toString()}</p>
+        <p class="client-principal identifier">${this._defaultPrincipal.toString()}</p>
         <p><button class="logout" @click=${this._logout}>Log out</button></p>
+        <p><div>Service Tickets:</div>
+          ${this._ccache.map(this.render_klist_ccache_node)}
+        </p>
       </div>`;
   }
 
@@ -290,7 +325,7 @@ export class WebathenaUI extends LitElement {
     var req_body = html`
       <div class="authed body">
         <p>You are logged in as</p>
-        <p class="client-principal identifier">${this._tgtSession.client.toString()}</p>
+        <p class="client-principal identifier">${this._defaultPrincipal.toString()}</p>
         <p class="foreign-origin identifier">${this._tktReqData.origin}</p>
         <p>requests permission to</p>
         <ul class="permission-list">
@@ -306,15 +341,15 @@ export class WebathenaUI extends LitElement {
   }
 
   render() {
-    if (this._tgtSession) {
-      if (this._tgtSession.timeRemaining() < 60 * 60 * 1000) {
+    if (this._ccache && this._ccache[0]) {
+      if (this._ccache[0].timeRemaining() < 60 * 60 * 1000) {
         return this.render_renew();
       }
       if (this._tktReq) {
         if (this._tktReqData) {
           if (this._tktReqData.user && (
-            this._tgtSession.client.realm != this._tktReqData.user.realm ||
-            !krb.principalNamesEqual(this._tgtSession.client.principalName,
+            this._defaultPrincipal.realm != this._tktReqData.user.realm ||
+            !krb.principalNamesEqual(this._defaultPrincipal.principalName,
                                      this._tktReqData.user.principalName))) {
             this._tktReqData.cb({
               status: 'DENIED',
@@ -336,8 +371,11 @@ export class WebathenaUI extends LitElement {
   // on-click handlers
 
   private _logout = () => {
-    localStorage.removeItem('tgtSession');
-    this._tgtSession = null;
+    localStorage.removeItem('ccache');
+    localStorage.removeItem('defaultPrincipal');
+    this._defaultPrincipal = null;
+    this._ccache = null;
+    this._ccacheIndex = {};
     this.requestUpdate();
   }
 
@@ -383,7 +421,11 @@ export class WebathenaUI extends LitElement {
     }
 
     try {
-      this._tgtSession = await KDC.getTGTSession(principal, password)
+      let tgtSession = await KDC.getTGTSession(principal, password);
+      this._ccache = [tgtSession];
+      this._ccacheIndex = {};
+      this._ccacheIndex[tgtSession.service.toString()] = 0;
+      this._defaultPrincipal = tgtSession.client;
     } catch (error) {
       var detail: WebathenaAlertDetails = {
         title: 'Error logging in:',
@@ -425,17 +467,17 @@ export class WebathenaUI extends LitElement {
       }
     }
 
-    this.saveTGTSession();
+    this.saveCCache();
     this.requestUpdate();
   }
 
   private _tktReqAllow = async () => {
-    if (!this._tgtSession) {
+    if (!this._ccache) {
       log('No ticket');
       this._tktReqDeny();
       return;
     }
-    if (this._tgtSession.isExpired()) {
+    if (this._ccache[0].isExpired()) {
       log('Ticket expired');
       this._tktReqDeny();
       return;
@@ -443,9 +485,19 @@ export class WebathenaUI extends LitElement {
 
     try{
       const sessions = await Promise.all(this._tktReqData.services.map(async svc => {
-        return await KDC.getServiceSession(this._tgtSession, svc);
+        let svcString = svc.toString();
+        if (svcString in this._ccacheIndex) {
+          // If we have the service ticket cahced, use it.
+          return this._ccache[this._ccacheIndex[svcString]];
+        }
+        // Get and cache the service ticket.
+        let session = await KDC.getServiceSession(this._ccache[0], svc);
+        let idx = this._ccache.push(session) - 1;
+        this._ccacheIndex[svcString] = idx;
+        return session;
       }));
-      log(sessions);
+      this.saveCCache();
+      // log(sessions);
 
       if (this._tktReqData.returnList) {
         this._tktReqData.cb({

@@ -93,6 +93,9 @@ button {
   font-family: 'PT Mono', monospace;
   font-size: 18pt;
 }
+.service-ticket {
+  font-family: 'PT Mono', monospace;
+}
 .button-box > button {
   width: 48%;
   margin: 0 1% 0 1%;
