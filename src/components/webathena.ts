@@ -413,9 +413,9 @@ export class WebathenaUI extends LitElement {
 
     // TODO: spinner
     const principal = krb.Principal.fromString(username);
-    if (principal.realm != krb.realm) {
+    if (!krb.allowed_client_realms.includes(principal.realm)) {
       window.dispatchEvent(new CustomEvent('webathena-alert', {detail: {title: 'Error logging in:',
-                                                                        text: 'Cross-realm not supported!'}}));
+                                                                        text: 'Realm ' + principal.realm + ' not supported!'}}));
       button.disabled = false;
       return;
     }
@@ -490,8 +490,23 @@ export class WebathenaUI extends LitElement {
           // If we have the service ticket cahced, use it.
           return this._ccache[this._ccacheIndex[svcString]];
         }
+        let tgt = this._ccache[0] // initial TGT
+        if (svc.realm != tgt.srealm) {
+          // Cross-realm (single-hop)
+          // TODO: referrals, trust paths?
+          let tgtName = 'krbtgt/' + svc.realm + '@' + this._defaultPrincipal.realm;
+          if (tgtName in this._ccacheIndex) {
+            // Already have cross-realm tgt
+            tgt = this._ccache[this._ccacheIndex[tgtName]];
+          } else {
+            // Need cross-realm tgt first
+            tgt = await KDC.getServiceSession(tgt, krb.Principal.fromString(tgtName));
+            let idx = this._ccache.push(tgt) - 1;
+            this._ccacheIndex[tgtName] = idx;
+          }
+        }
         // Get and cache the service ticket.
-        let session = await KDC.getServiceSession(this._ccache[0], svc);
+        let session = await KDC.getServiceSession(tgt, svc);
         let idx = this._ccache.push(session) - 1;
         this._ccacheIndex[svcString] = idx;
         return session;

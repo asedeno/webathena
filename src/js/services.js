@@ -23,5 +23,3 @@ SERVICES["zephyr/zephyr" + "@" + krb.realm] = {
 };
 
 export default SERVICES;
-
-

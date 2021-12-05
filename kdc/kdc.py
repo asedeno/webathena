@@ -66,8 +66,7 @@ def send_request(socks, data):
 
 
 class WebKDC:
-    def __init__(self, realm=settings.REALM):
-        self.realm = realm
+    def __init__(self):
         self.url_map = Map([
             Rule('/v1/AS_REQ', endpoint=('AS_REQ', krb_asn1.AS_REQ), methods=['POST']),
             Rule('/v1/TGS_REQ', endpoint=('TGS_REQ', krb_asn1.TGS_REQ), methods=['POST']),
@@ -108,6 +107,36 @@ class WebKDC:
             headers=[('Content-Disposition',
                       'attachment; filename="b64_response.txt"')])
 
+    @staticmethod
+    def get_realm_from_request(req_asn1):
+        msg_type = int(req_asn1['msg-type'])
+        realm = req_asn1['req-body']['realm']
+        if realm in settings.ALLOWED_REALMS:
+            # If the realm in the req-body is allowed, let it through.
+            return realm
+
+        if msg_type == krb_asn1.KDC_REQ.msg_type_tgs:
+            # For a TGS_REQ, check the realm of the requesting ticket.
+            # That is available in the AP_REQ encoded in PA_DATA.
+            try:
+                ap_req_der = [
+                    ent for ent in req_asn1['padata']
+                    if int(ent['padata-type']) == krb_asn1.PA_DATA.pa_tgs_req
+                ][0]['padata-value']
+            except IndexError:
+                raise ValueError('Missing required padata for TGS_REQ')
+
+            # Decode the enclosed AP_REQ.
+            ap_req = der_decoder.decode(ap_req_der,
+                                        asn1Spec=krb_asn1.AP_REQ())[0]
+
+            # If the ticket being used in this request is from an
+            # allowed realm, then let it through.
+            if ap_req['ticket']['realm'] in settings.ALLOWED_REALMS:
+                return realm
+
+        raise ValueError('Forbidden cross-realm activity')
+
     def proxy_kdc_request(self, request, endpoint):
         """
         Common code for all proxied KDC requests. endpoint is a
@@ -140,9 +169,11 @@ class WebKDC:
         except (PyAsn1Error, ValueError) as e:
             return self._error_response(e)
 
+        realm = self.get_realm_from_request(req_asn1)
+
         # Okay, it seems good. Go on and send it, reencoded.
         krb_rep = self.send_krb_request(
-            der_encoder.encode(req_asn1),
+            der_encoder.encode(req_asn1), realm,
             use_master='use_master' in request.args)
 
         if krb_rep is None:
@@ -162,7 +193,7 @@ class WebKDC:
             headers=[('Content-Disposition',
                       'attachment; filename="json_response.txt"')])
 
-    def send_krb_request(self, krb_req, use_master):
+    def send_krb_request(self, krb_req, realm, use_master):
         """
         Sends Kerberos request krb_req, returns the response or None
         if we time out. If use_master is true, we only talk to the
@@ -172,7 +203,7 @@ class WebKDC:
         # TODO: Support TCP as well as UDP. I think MIT's KDC only
         # supports UDP though.
         socktype = '_udp'
-        srv_query = '%s.%s.%s' % (svctype, socktype, self.realm)
+        srv_query = '%s.%s.%s' % (svctype, socktype, realm)
         srv_records = list(getattr(dns.resolver, 'resolve', dns.resolver.query)(srv_query, 'SRV'))
         srv_records.sort(key=lambda r: r.priority)
 

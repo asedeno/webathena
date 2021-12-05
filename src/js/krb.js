@@ -5,6 +5,9 @@ import kcrypto from './kcrypto.js';
 import krb from'./krb_proto.js';
 
 /** @const */ krb.realm = "ATHENA.MIT.EDU"; // XXX
+/** @const */ krb.allowed_client_realms = [
+    "ATHENA.MIT.EDU",
+]
 /** @const */ krb.supportedEnctypes = [
     kcrypto.enctype.aes256_cts_hmac_sha1_96,
     kcrypto.enctype.aes128_cts_hmac_sha1_96
