@@ -294,12 +294,12 @@ export class WebathenaUI extends LitElement {
                          html`
 Renewable until: ${entry.renewTill.toISOString()}` : html``;
     return html`
-      <div class="klist-entry"><span @click=${this._klist_ent_expand_collapse}>⊞</span> ${entry.service.toString()}
-        <div class="klist-detail hide">\
+      <details class="klist-entry">
+        <summary>${entry.service.toString()}</summary>
+        <div class="klist-detail">\
 Valid starting:  ${(entry.starttime || entry.authtime).toISOString()}
 Expires:         ${entry.endtime.toISOString()}${renewable_line}</div>
-</div>
-    `;
+      </details>`;
   };
 
   render_klist() {
@@ -308,10 +308,10 @@ Expires:         ${entry.endtime.toISOString()}${renewable_line}</div>
         <p>You are logged in as</p>
         <p class="client-principal identifier">${this._defaultPrincipal.toString()}</p>
         <p><button class="logout" @click=${this._logout}>Log out</button></p>
-        <p><div class="klist">
-          <span @click=${this._klist_expand_collapse}>⊞</span> Service Tickets
-          <div class="klist-body hide">${this._ccache.map(this.render_klist_ccache_node, this)}</div>
-        </div></p>
+        <p><details class="klist">
+          <summary>Service Tickets</summary>
+          <div class="klist-body">${this._ccache.map(this.render_klist_ccache_node, this)}</div>
+        </details></p>
       </div>`;
   }
 
@@ -408,32 +408,6 @@ Expires:         ${entry.endtime.toISOString()}${renewable_line}</div>
     this._ccache = null;
     this._ccacheIndex = {};
     this.requestUpdate();
-  }
-
-  private _klist_expand_collapse(event: Event) {
-    event.preventDefault();
-    if (event.target instanceof HTMLElement) {
-      let target = event.target;
-      let next = target.nextElementSibling;
-      if (!next.classList.toggle('hide')) {
-        target.innerText = '⊟';
-      } else {
-        target.innerText = '⊞';
-      }
-    }
-  }
-
-  private _klist_ent_expand_collapse(event: Event) {
-    event.preventDefault();
-    if (event.target instanceof HTMLElement) {
-      let target = event.target;
-      let next = target.nextElementSibling;
-      if (!next.classList.toggle('hide')) {
-        target.innerText = '⊟';
-      } else {
-        target.innerText = '⊞';
-      }
-    }
   }
 
   private async _doLogin(event: Event) {
