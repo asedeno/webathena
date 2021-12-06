@@ -290,22 +290,15 @@ export class WebathenaUI extends LitElement {
   }
 
   render_klist_ccache_node(entry) {
-    let renewRow = entry.renewTill ? html`<tr>
-            <td>Renewable until:</td>
-            <td>${entry.renewTill.toISOString()}</td>
-          </tr>` : html``;
+    let renewable_line = entry.renewTill ?
+                         html`
+Renewable until: ${entry.renewTill.toISOString()}` : html``;
     return html`
       <div class="klist-entry"><span @click=${this._klist_ent_expand_collapse}>⊞</span> ${entry.service.toString()}
-        <table class="klist-detail hide">
-          <tr>
-            <td>Valid starting:</td>
-            <td>${(entry.starttime || entry.authtime).toISOString()}</td>
-          </tr><tr>
-            <td>Expires:</td>
-            <td>${entry.endtime.toISOString()}</td>
-          </tr>${renewRow}
-        </table>
-      </div>
+        <div class="klist-detail hide">\
+Valid starting:  ${(entry.starttime || entry.authtime).toISOString()}
+Expires:         ${entry.endtime.toISOString()}${renewable_line}</div>
+</div>
     `;
   };
 

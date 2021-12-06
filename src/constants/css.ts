@@ -118,7 +118,7 @@ button {
 }
 .klist-detail {
   margin-left: 1.5em;
-  border-spacing: 0;
+  white-space: pre-wrap;
 }
 .klist-entry {
   font-family: 'PT Mono', monospace;
