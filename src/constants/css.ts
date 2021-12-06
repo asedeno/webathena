@@ -93,9 +93,6 @@ button {
   font-family: 'PT Mono', monospace;
   font-size: 18pt;
 }
-.service-ticket {
-  font-family: 'PT Mono', monospace;
-}
 .button-box > button {
   width: 48%;
   margin: 0 1% 0 1%;
@@ -112,5 +109,22 @@ button {
 }
 .authed .client-principal {
     margin-bottom: 1em;
+}
+.klist {
+  text-align: left;
+}
+.klist-body {
+  margin-left: 1em;
+}
+.klist-detail {
+  margin-left: 1.5em;
+  border-spacing: 0;
+}
+.klist-entry {
+  font-family: 'PT Mono', monospace;
+  font-size: 12pt;
+}
+.hide {
+  display: none;
 }
 `;

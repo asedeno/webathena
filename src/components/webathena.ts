@@ -290,10 +290,22 @@ export class WebathenaUI extends LitElement {
   }
 
   render_klist_ccache_node(entry) {
-    let startTime = entry.starttime || entry.authtime;
-    let endTime = entry.endtime;
+    let renewRow = entry.renewTill ? html`<tr>
+            <td>Renewable until:</td>
+            <td>${entry.renewTill.toISOString()}</td>
+          </tr>` : html``;
     return html`
-      <div class="service-ticket">${entry.service.toString()}</div>
+      <div class="klist-entry"><span @click=${this._klist_ent_expand_collapse}>⊞</span> ${entry.service.toString()}
+        <table class="klist-detail hide">
+          <tr>
+            <td>Valid starting:</td>
+            <td>${(entry.starttime || entry.authtime).toISOString()}</td>
+          </tr><tr>
+            <td>Expires:</td>
+            <td>${entry.endtime.toISOString()}</td>
+          </tr>${renewRow}
+        </table>
+      </div>
     `;
   };
 
@@ -303,9 +315,10 @@ export class WebathenaUI extends LitElement {
         <p>You are logged in as</p>
         <p class="client-principal identifier">${this._defaultPrincipal.toString()}</p>
         <p><button class="logout" @click=${this._logout}>Log out</button></p>
-        <p><div>Service Tickets:</div>
-          ${this._ccache.map(this.render_klist_ccache_node)}
-        </p>
+        <p><div class="klist">
+          <span @click=${this._klist_expand_collapse}>⊞</span> Service Tickets
+          <div class="klist-body hide">${this._ccache.map(this.render_klist_ccache_node, this)}</div>
+        </div></p>
       </div>`;
   }
 
@@ -402,6 +415,32 @@ export class WebathenaUI extends LitElement {
     this._ccache = null;
     this._ccacheIndex = {};
     this.requestUpdate();
+  }
+
+  private _klist_expand_collapse(event: Event) {
+    event.preventDefault();
+    if (event.target instanceof HTMLElement) {
+      let target = event.target;
+      let next = target.nextElementSibling;
+      if (!next.classList.toggle('hide')) {
+        target.innerText = '⊟';
+      } else {
+        target.innerText = '⊞';
+      }
+    }
+  }
+
+  private _klist_ent_expand_collapse(event: Event) {
+    event.preventDefault();
+    if (event.target instanceof HTMLElement) {
+      let target = event.target;
+      let next = target.nextElementSibling;
+      if (!next.classList.toggle('hide')) {
+        target.innerText = '⊟';
+      } else {
+        target.innerText = '⊞';
+      }
+    }
   }
 
   private async _doLogin(event: Event) {
