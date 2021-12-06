@@ -52,10 +52,35 @@ export class WebathenaUI extends LitElement {
 
   protected static _ccacheVersion: string = '2';
 
+  _maybeMigrateData(): boolean {
+    let version = localStorage.getItem('version');
+    try {
+      if (version == '1') {
+        let tgtSession = localStorage.getItem('tgtSession');
+        if (tgtSession) {
+          let session = krb.Session.fromDict(JSON.parse(tgtSession));
+          this._ccache = [session];
+          this._ccacheIndex = {};
+          this._ccacheIndex[session.service.toString()] = 0;
+          this._defaultPrincipal = session.client;
+          localStorage.clear();
+          this.saveCCache();
+          return true;
+        }
+      }
+    } catch(err) {
+      // Don't care; move on.
+    }
+    localStorage.clear();
+    localStorage.setItem('version', WebathenaUI._ccacheVersion);
+    return false;
+  }
+
   loadCCache() {
     if (localStorage.getItem('version') !== WebathenaUI._ccacheVersion) {
-      localStorage.clear();
-      localStorage.setItem('version', WebathenaUI._ccacheVersion);
+      if (this._maybeMigrateData()) {
+        return;
+      }
     }
 
     let defaultPrincipal = localStorage.getItem('defaultPrincipal');
