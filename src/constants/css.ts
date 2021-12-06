@@ -124,7 +124,4 @@ button {
   font-family: 'PT Mono', monospace;
   font-size: 12pt;
 }
-.hide {
-  display: none;
-}
 `;
