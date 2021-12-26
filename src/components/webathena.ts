@@ -175,7 +175,7 @@ export class WebathenaUI extends LitElement {
         cb({
           status: "ERROR",
           code: "BAD_REQUEST",
-          message: "Bad services argument."
+          message: "Bad user argument."
         });
         throw err;
       }
