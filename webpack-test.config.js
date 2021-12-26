@@ -19,7 +19,6 @@ module.exports = (env) => {
     plugins: [
       new webpack.ProvidePlugin({
         // node-installed things
-        Q: 'q',
         assert: ['chai', 'assert'],
 
         // things in ./src/contrib
