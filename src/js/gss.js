@@ -6,6 +6,7 @@
 "use strict";
 
 import krb from './krb.js';
+import asn1 from './asn1.js';
 
 var gss = { };
 
