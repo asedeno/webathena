@@ -48,7 +48,6 @@ export class WebathenaAlert extends LitElement {
     this.text = event.detail.text;
     this.badEncType = event.detail.badEncType;
     this.hidden = false;
-    this.requestUpdate();
   }
 
   private _dismiss_alert = (event: Event) => {
@@ -56,7 +55,6 @@ export class WebathenaAlert extends LitElement {
     this.text = '';
     this.badEncType = false;
     this.hidden = true;
-    this.requestUpdate();
   }
 
   render_bad_etypes() {

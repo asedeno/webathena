@@ -211,8 +211,6 @@ export class WebathenaUI extends LitElement {
       services: services,
       returnList: returnList,
     };
-
-    this.requestUpdate();
   };
 
 
@@ -407,13 +405,11 @@ Expires:         ${entry.endtime.toISOString()}${renewable_line}</div>
     this._defaultPrincipal = null;
     this._ccache = null;
     this._ccacheIndex = {};
-    this.requestUpdate();
   }
 
   private async _doLogin(event: Event) {
     event.preventDefault();
     this.dispatchEvent(new Event('webathena-dismiss-alert', {bubbles: true, composed: true}));
-    this.requestUpdate();
     const button = event.target as HTMLButtonElement;
     const usernameInput = this.shadowRoot.querySelector('input.username') as HTMLInputElement;
     const passwordInput = this.shadowRoot.querySelector('input.password') as HTMLInputElement;
@@ -499,7 +495,6 @@ Expires:         ${entry.endtime.toISOString()}${renewable_line}</div>
     }
 
     this.saveCCache();
-    this.requestUpdate();
   }
 
   private _tktReqAllow = async () => {
