@@ -5,3 +5,5 @@ out
 src/.htaccess
 dist
 test/dist
+*.d.ts
+*.d.ts.map
