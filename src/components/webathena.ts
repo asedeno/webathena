@@ -36,6 +36,7 @@ export class WebathenaUI extends LitElement {
   @state() protected _ccacheIndex = {};
   @state() protected _tktReq: boolean = false;
   @state() protected _tktReqData: WinChanArgs | null = null;
+  @state() protected _explanation: string | null = null;
 
   constructor() {
     super();
@@ -180,6 +181,8 @@ export class WebathenaUI extends LitElement {
         throw err;
       }
     }
+
+    this._explanation = args.explanation;
 
     const deny = (code, message) => {
       code = code || "NOT_ALLOWED";
@@ -363,7 +366,13 @@ Expires:         ${entry.endtime.toISOString()}${renewable_line}</div>
           <li>Learn your email address</li>
           ${this._tktReqData.services.map(this.render_tktReq_svcnode)}
         </ul>
-        ${endtime && html`<p class="remark">At the latest, this permission will expire on ${endtime.toLocaleString()}.</p>`}
+        ${endtime && html`
+          <p class="remark">
+            At the latest, this permission will expire on ${endtime.toLocaleString()}.
+            ${this._explanation ? "The app provided the following explanation:" : ""}
+          </p>
+        `}
+        ${this._explanation && html`<blockquote class="explanation">${this._explanation}</blockquote>`}
         <div class="button-box">
           <button @click=${this._tktReqAllow}>Allow</button>
           <button @click=${this._tktReqDeny}>Deny</button>
