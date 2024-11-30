@@ -124,4 +124,7 @@ button {
   font-family: 'PT Mono', monospace;
   font-size: 12pt;
 }
+.remark {
+  font-size: 12pt;
+}
 `;
