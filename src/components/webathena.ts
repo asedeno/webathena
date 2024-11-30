@@ -351,6 +351,8 @@ Expires:         ${entry.endtime.toISOString()}${renewable_line}</div>
   }
 
   render_tktReq() {
+    var endtime = this._ccache[0].endtime;
+
     var req_body = html`
       <div class="authed body">
         <p>You are logged in as</p>
@@ -361,6 +363,7 @@ Expires:         ${entry.endtime.toISOString()}${renewable_line}</div>
           <li>Learn your email address</li>
           ${this._tktReqData.services.map(this.render_tktReq_svcnode)}
         </ul>
+        <p class="remark">At the latest, this permission will expire on ${endtime.toLocaleString()}.</p>
         <div class="button-box">
           <button @click=${this._tktReqAllow}>Allow</button>
           <button @click=${this._tktReqDeny}>Deny</button>
