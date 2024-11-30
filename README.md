@@ -63,6 +63,46 @@ On your backend, you need to copy and paste some Python code that will convert t
 
 Once you convert the JSON to a binary format using this code, you can put it into a temporary file and set `KRB5CCNAME` to the path of that file ([example](https://github.com/sipb/moira-rest-api/blob/main/decorators.py#L87)), so any processes you spawn will use the user's kerberos tickets ([moira Python example](https://github.com/sipb/moira-rest-api/blob/main/moira_query.py)).
 
+## Frontend parameters
+
+You can pass the following parameters to WebAthena from the frontend via `WinChan.open()`.
+
+* `url`: must be `https://webathena.mit.edu/#!request_ticket_v1` (or your local instance during development)
+* `relay_url`: must be `https://webathena.mit.edu/relay.html` (or your local instance during development)
+* `params`:
+    - `services`: a list of services (objects with a `realm` and a `principal`, see below)
+    - Alternatively, you can pass a single service by passing `realm` and `principal` directly.
+    - `explanation`: optionally pass a string to show during the permission(s) prompt, to explain to users why you need the permission(s) you are requesting
+    - `user`: Not usually needed or useful. An object with a `principal` (an array, possibly containing only one string, the username) and a `realm`, which will make WebAthena return `{ status: "DENIED", code: "WRONG_USER" }` if the ticket you get corresponds to a different user than the requested one.
+
+Service parameters
+* `realm`: for MIT, it is `ATHENA.MIT.EDU`
+* `principal`: the specific service to request tickets for, such as `['moira', 'moira7.mit.edu']`
+
+To figure out what you need for the service, you can use the service (e.g. by running a shell command), and then run `klist`:
+
+```sh
+Ticket cache: KCM:1000
+Default principal: rgabriel@ATHENA.MIT.EDU
+
+Valid starting       Expires              Service principal
+11/29/2024 09:15:07  11/30/2024 06:30:05  moira/moira7.mit.edu@ATHENA.MIT.EDU
+	renew until 11/30/2024 09:15:02
+11/29/2024 09:15:05  11/30/2024 06:30:05  krbtgt/ATHENA.MIT.EDU@ATHENA.MIT.EDU
+	renew until 11/30/2024 09:15:02
+11/29/2024 22:43:19  11/30/2024 06:30:05  zephyr/zephyr@ATHENA.MIT.EDU
+	renew until 11/30/2024 09:15:02
+```
+
+For example, `hello/world@ATHENA.MIT.EDU` becomes
+
+```js
+{
+    realm: "ATHENA.MIT.EDU",
+    principal: ["hello", "world"]
+}
+```
+
 ### Examples
 
 See the samples folder for some simple samples.
