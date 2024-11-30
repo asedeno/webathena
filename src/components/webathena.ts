@@ -363,7 +363,7 @@ Expires:         ${entry.endtime.toISOString()}${renewable_line}</div>
           <li>Learn your email address</li>
           ${this._tktReqData.services.map(this.render_tktReq_svcnode)}
         </ul>
-        <p class="remark">At the latest, this permission will expire on ${endtime.toLocaleString()}.</p>
+        ${endtime && html`<p class="remark">At the latest, this permission will expire on ${endtime.toLocaleString()}.</p>`}
         <div class="button-box">
           <button @click=${this._tktReqAllow}>Allow</button>
           <button @click=${this._tktReqDeny}>Deny</button>
