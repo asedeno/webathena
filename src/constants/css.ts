@@ -124,4 +124,15 @@ button {
   font-family: 'PT Mono', monospace;
   font-size: 12pt;
 }
+.remark {
+  font-size: 12pt;
+}
+.explanation {
+  font-size: 12pt;
+  border-left: 4px solid #444;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  padding: 1em;
+  margin: 1em 0;
+}
 `;
