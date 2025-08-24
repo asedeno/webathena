@@ -47,6 +47,20 @@ describe("kdc", function() {
     assert.equal(principal.nameToString(), "davidben");
   });
 
+  it("should support aliases, i.e. converting email to kerb", function() {
+    var principal = krb.Principal.fromString("jflorey@mit.edu");
+    // @mit.edu is defined as an alias for @ATHENA.MIT.EDU,
+    //   so everything should work the same
+    assert.equal(principal.realm, "ATHENA.MIT.EDU");
+    assert.equal(principal.principalName.nameType, krb.KRB_NT_PRINCIPAL);
+    assert.equal(principal.principalName.nameType, krb.KRB_NT_PRINCIPAL);
+    assert.ok(principal.principalName.nameString.length === 1 &&
+              principal.principalName.nameString[0] === "jflorey");
+    assert.equal(principal.toString(), "jflorey@ATHENA.MIT.EDU");
+    assert.equal(principal.toStringShort(), "jflorey");
+    assert.equal(principal.nameToString(), "jflorey");
+  });
+
   it("should throw on malformed principals", function() {
     assert.throws(function() { krb.Principal.fromString("davidben\\"); });
     assert.throws(function() { krb.Principal.fromString("davidben@FOO@BAR"); });
