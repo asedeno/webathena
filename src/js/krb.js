@@ -8,6 +8,9 @@ import krb from'./krb_proto.js';
 /** @const */ krb.allowed_client_realms = [
     "ATHENA.MIT.EDU",
 ]
+/** @const */ krb.realm_aliases = {
+    'mit.edu': 'ATHENA.MIT.EDU',
+};
 /** @const */ krb.supportedEnctypes = [
     kcrypto.enctype.aes256_cts_hmac_sha1_96,
     kcrypto.enctype.aes128_cts_hmac_sha1_96
@@ -86,6 +89,9 @@ krb.Principal.fromString = function(str) {
         components.push(component);
         // If no realm, use the default.
         component = krb.realm;
+    } else if (krb.realm_aliases[component]) {
+        // Handle aliases (e.g. @mit.edu to @ATHENA.MIT.EDu)
+        component = krb.realm_aliases[component];
     }
     return new krb.Principal({
         nameType: krb.KRB_NT_PRINCIPAL,
