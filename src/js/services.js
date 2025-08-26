@@ -21,5 +21,8 @@ SERVICES["afs/athena.mit.edu" + "@" + krb.realm] = {
 SERVICES["zephyr/zephyr" + "@" + krb.realm] = {
     desc: "Send and receive zephyr notices as you"
 };
+SERVICES["smtp/outgoing.mit.edu" + "@" + krb.realm] = {
+    desc: "Send (but not receive) email as you"
+}
 
 export default SERVICES;
