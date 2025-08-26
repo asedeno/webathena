@@ -89,9 +89,8 @@ krb.Principal.fromString = function(str) {
         components.push(component);
         // If no realm, use the default.
         component = krb.realm;
-    }
-    // Handle aliases (e.g. @mit.edu to @ATHENA.MIT.EDu)
-    if (krb.realm_aliases[component]) {
+    } else if (krb.realm_aliases[component]) {
+        // Handle aliases (e.g. @mit.edu to @ATHENA.MIT.EDu)
         component = krb.realm_aliases[component];
     }
     return new krb.Principal({
